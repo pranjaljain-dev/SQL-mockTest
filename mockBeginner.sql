@@ -1,212 +1,201 @@
 -- Basic Queries
--- 1. Write a query to display all the authors in the database.
-select
-    *
-from
-    authors;
-
--- 2. Retrieve the names and emails of all customers who joined after February 1, 2023.
+-- 1. Retrieve the names and emails of all customers.
 select
     name,
     email
 from
-    customers
-where
-    joindate > '2023-02-01';
+    customers;
 
--- 3. Find all books in the 'Fantasy' genre.
+-- 2. List all products along with their categories and prices.
 select
-    title
+    name,
+    category,
+    price
 from
-    books
-where
-    genre = 'Fantasy';
+    products;
 
--- 4. Display the total number of books available in stock.
+-- 3. Find the total number of products available in the 'Electronics' category.
 select
-    sum(stock) as available_books
+    count(productid) as total_products
 from
-    books;
+    products
+where
+    category = 'Electronics';
+
+-- 4. Display all orders placed by customers from the 'United States.'
+select
+    o.orderid,
+    o.orderdate,
+    o.totalamount,
+    c.customerid,
+    c.name,
+    c.country
+from
+    orders o
+    join customers c on o.customerid = c.customerid
+where
+    country = 'United States';
 
 -- Intermediate Queries
--- 5. Show the total revenue generated from all orders.
+-- 5. Calculate the total revenue generated from all orders.
 select
-    sum(totalprice) as revenue
+    sum(totalamount) as revenue
 from
     orders;
 
--- 6. List the details of orders placed by the customer named 'Alice Johnson.'
+-- 6. Find the name of the customer who placed the order with the highest total amount.
 select
-    o.orderid,
-    c.name,
-    o.bookid,
-    o.orderdate,
-    o.quantity,
-    o.totalprice
-from
-    orders o
-    join customers c on o.customerid = c.customerid
-where
-    c.name = 'Alice Johnson';
-
--- 7. Identify the book with the highest price.
-select
-    title,
-    price
-from
-    books
-where
-    price = (
-        select
-            max(price)
-        from
-            books
-    );
-
--- 8. Retrieve the details of books that have less than 50 units in stock.
-select
-    bookid,
-    title,
-    genre,
-    price
-from
-    books
-where
-    stock < 50;
-
--- Joins
--- 9. Write a query to list all books along with their author's name.
-select
-    a.name as author_name,
-    b.title as book_name
-from
-    books b
-    join authors a on b.authorid = a.authorid;
-
--- 10. Display all orders with the customer name and book title included.
-select
-    o.orderid,
-    c.name as customer,
-    b.title as book,
-    o.quantity,
-    o.totalprice
-from
-    orders o
-    join customers c on o.customerid = c.customerid
-    join books b on o.bookid = b.bookid;
-
--- Aggregations
--- 11. Calculate the total number of orders placed by each customer.
-select
-    customerid,
-    count(orderid) as total_orders
-from
-    orders
-group by
-    customerid;
-
--- 12. Find the average price of books in the 'Fiction' genre.
-select
-    title,
-    avg(price) as average_price
-from
-    books
-where
-    genre = 'Fiction'
-group by
-    title;
-
--- 13. Determine the author whose books have the highest combined stock.
-select
-    a.name,
-    sum(b.stock) as total_stock
-from
-    books b
-    join authors a on b.authorid = b.authorid
-group by
-    a.name
-order by
-    total_stock desc
-limit
-    1;
-
--- Filtering
--- 14. Retrieve the names of authors born before 1950.
-select
-    name
-from
-    authors
-where
-    birthyear < '1950';
-
--- 15. Find all customers from the 'United Kingdom.'
-select
-    *
-from
-    customers
-where
-    country = 'United Kingdom';
-
--- Advanced Queries
--- 16. Write a query to list all books that have been ordered more than once.
-select
-    b.title
-from
-    books b
-    join orders o on b.bookid = o.bookid
-group by
-    b.title
-having
-    count(o.orderid) > 1;
-
--- 17. Identify the top-selling book based on the quantity sold.
-select
-    b.title
-from
-    books b
-    join orders o on b.bookid = o.bookid
-where
-    o.quantity > 1
-order by
-    o.quantity desc
-limit
-    1;
-
--- 18. Calculate the total stock value for each book (price * stock).
-select
-    title,
-    sum(price * stock)
-from
-    books
-group by
-    title;
-
--- Subqueries
--- 19. Write a query to find the name of the customer who placed the most expensive order.
-select
-    c.name as customer,
-    o.totalprice
+    c.name
 from
     customers c
     join orders o on c.customerid = o.customerid
 where
-    o.totalprice = (
+    o.totalamount = (
         select
-            max(totalprice)
+            max(totalamount)
         from
             orders
     );
 
--- 20. Retrieve all books that have not been ordered yet.
+-- 7. Retrieve all products that have less than 50 units in stock.
 select
-    b.title as book_name
+    name
 from
-    books b
-    join orders o on o.bookid = b.bookid
+    products
 where
-    o.bookid not in (
+    stock < 50;
+
+-- 8. List all reviews with ratings of 4 or higher.
+select
+    reviewtext,
+    rating
+from
+    reviews
+where
+    rating >= 4;
+
+-- Joins
+-- 9. Write a query to display all orders along with the customer name and email.
+select
+    o.orderid,
+    o.orderdate,
+    o.totalamount,
+    c.name,
+    c.email
+from
+    orders o
+    join customers c on o.customerid = c.customerid;
+
+-- 10. List all reviews along with the product name and customer name.
+select
+    r.reviewtext,
+    p.name as product_name,
+    c.name as customer_name
+from
+    reviews r
+    join products p on r.productid = p.productid
+    join customers c on r.customerid = c.customerid;
+
+-- Aggregations
+-- 11. Calculate the average rating for each product.
+select
+    p.name,
+    avg(rating) as average_rating
+from
+    reviews r
+    join products p on r.productid = p.productid
+group by
+    p.name
+
+ -- 12. Find the total revenue generated by each product category.
+select
+    category,
+    sum(price) as revenue
+from
+    products
+group by
+    category;
+
+-- 13. Determine the country with the highest number of customers.
+select
+    country,
+    count(*) as highest_customers
+from
+    customers
+group by
+    country;
+
+-- Filtering
+-- 14. Retrieve all orders placed after March 1, 2023.
+select
+    orderid
+from
+    orders
+where
+    orderdate > '2023-03-01';
+
+-- 15. Display all shipments that are still 'In Transit.'
+select
+    *
+from
+    shipping
+where
+    status = 'In Transit';
+
+-- Advanced Queries
+-- 16. Identify the top-rated product based on average rating.
+select
+    p.name,
+    avg(rating) as average_rating
+from
+    reviews r
+    join products p on r.productid = p.productid
+group by
+    p.name
+order by
+    average_rating desc
+limit
+    1;
+
+-- 17. List all customers who have written at least one review.
+select
+    distinct c.name
+from
+    reviews r
+    join customers c on r.customerid = c.customerid;
+
+-- 18. Find all products that have been purchased but never reviewed.
+select
+    p.name
+from
+    products p
+    left join reviews r on p.productid = r.productid
+where
+    r.productid is null;
+
+-- Subqueries
+-- 19. Write a query to find the product with the highest total sales (quantity * price).
+select
+    p.name as product_name,
+    o.totalamount as total_sales
+from
+    products p
+    join orders o on p.price = o.totalamount / (
         select
-            o.bookid
+            count(*)
         from
-            orders o
-    );
+            products
+    )
+order by
+    total_sales desc
+limit
+    1;
+
+-- 20. Retrieve all products that have not been purchased yet.
+select
+    p.name as product_name
+from
+    products p
+    left join orders o on p.productid = o.orderid
+where
+    o.orderid is null;
