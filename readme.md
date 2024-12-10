@@ -1,1 +1,1 @@
-SQL practice
+WELCOME TO LEARNING SQL
